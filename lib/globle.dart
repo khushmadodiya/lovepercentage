@@ -1,5 +1,5 @@
 import 'dart:math';
-
+late String per;
 double value() {
   double minRange = 87.0;
   double maxRange = 99.0;

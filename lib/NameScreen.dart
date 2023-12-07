@@ -4,13 +4,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart'as http;
+import 'package:love/showResult.dart';
+import 'package:love/showresultavailable.dart';
 
 import 'globle.dart';
-
+String cal="";
 
 class NameScreen extends StatefulWidget{
   @override
@@ -25,38 +28,56 @@ class _NameScreenState extends State<NameScreen> {
   final femaleTextEditingController = TextEditingController();
   final femaledateTextEditingController = TextEditingController();
   final passwordTextEditingController = TextEditingController();
-  String cal="";
+
   bool show =false;
   final _formkey =GlobalKey<FormState>();
   Future<void> _submit()async{
     var resss;
     if(_formkey.currentState!.validate()) {
       try{
-        var uri = "http://192.168.134.238/flutterapi/emailvalidator.php";
+        var uri = "http://localhost/love/check_already_exist.php";
         resss = await http.post(Uri.parse(uri),
             body: {
               "male":malenameTextEditingController.text.trim(),
+              "maledate":maledatelTextEditingController.text.trim(),
               "female":femaleTextEditingController.text.trim(),
+              "femaledate":femaledateTextEditingController.text.trim(),
 
             });
         var response = jsonDecode(resss.body);
-        print(response["rowCount"]);
-        print(response["success"]);
-        if(response["success"]){
-          Fluttertoast.showToast(msg: "email Alrady exist");
+        // print(response["result"]);
+        // print(response["success"]);
+        if(response["success"]=="true"){
+          per = response["result"];
+          print(per);
+          if(per!=null){
+          Navigator.push(context, MaterialPageRoute(builder: (context)=>showResultA()));
+          Fluttertoast.showToast(msg: "repeated couple name");}
+          else{
+            Fluttertoast.showToast(msg: 'arr is null');
+          }
+
         }
         else{
-
+          print("else part");
+          double val = value();
+          cal = val.toString();
           try{
-            var uri = "http://192.168.134.238/flutterapi/insert_record.php";
+            var uri = "http://localhost/love/insert_couple.php";
             var res = await http.post(Uri.parse(uri),
                 body: {
                   "male":malenameTextEditingController.text.trim(),
+                  "maledate":maledatelTextEditingController.text.trim(),
                   "female":femaleTextEditingController.text.trim(),
-                  "per":passwordTextEditingController.text.trim(),
+                  "femaledate":femaledateTextEditingController.text.trim(),
+                  "per":cal,
                 });
             var response = jsonDecode(res.body);
+            print(response["success"]);
             if(response["success"]=="true"){
+              // per = response["result"];
+              // print(per);
+              Navigator.push(context, MaterialPageRoute(builder: (context)=>showResult()));
               Fluttertoast.showToast(msg: "inserted");
             }
             else{
@@ -91,54 +112,29 @@ class _NameScreenState extends State<NameScreen> {
       child: Scaffold(
         backgroundColor: Colors.grey.shade800,
 
-        body: Stack(
-          children:[
-            Container(
-            // width: MediaQuery.of(context).size.width/1.5,
+        body: Center(
+          child: Container(
+            width: kIsWeb ? MediaQuery.of(context).size.width/2.1:MediaQuery.of(context).size.width,
             child: ListView(
               // padding: EdgeInsets.all(10),
               children: [
-                // Row(
-                //   children: [
-                //     Container(
-                //       width: MediaQuery.of(context).size.width/2,
-                //       child: Image.asset("assets/images/lo.gif"),
-                //     ),
-                //
-                //     Container(
-                //       width: MediaQuery.of(context).size.width/2,
-                //       child: Image.asset("assets/images/lo.gif"),
-                //     ),
-                //   ],
-                // ),
-                Stack(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(width: MediaQuery.of(context).size.width,
-                      child:Row(
-                        children: [
-                          Container(
-                            width: MediaQuery.of(context).size.width/2,
-                            child: Image.asset("assets/images/lo.gif"),
-                          ),
-
-                          Container(
-                            width: MediaQuery.of(context).size.width/2,
-                            child: Image.asset("assets/images/lo.gif"),
-                          ),
-                        ],
-                      ),
-
+                    Container(
+                      width:kIsWeb?MediaQuery.of(context).size.width/4.5: MediaQuery.of(context).size.width/2,
+                      child: Image.asset("assets/images/lo.gif"),
                     ),
-                    Center(child: Column(
-                      children: [
-                        SizedBox(height: 50,),
-                        Text("$cal %",style: TextStyle(fontSize: 50,color: Colors.white),),
-                      ],
-                    ))
+
+                    Container(
+                      width:kIsWeb?MediaQuery.of(context).size.width/4.5: MediaQuery.of(context).size.width/2,
+                      child: Image.asset("assets/images/lo.gif"),
+                    ),
                   ],
                 ),
+
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(40,30,40,50),
+                  padding: const EdgeInsets.fromLTRB(40,20,40,20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -195,7 +191,7 @@ class _NameScreenState extends State<NameScreen> {
                                 LengthLimitingTextInputFormatter(50)
                               ],
                               decoration: InputDecoration(
-                                hintText: "Female DOB",
+                                hintText: "Male DOB",
                                 hintStyle: TextStyle(
                                     color: Colors.white,
                                     fontSize: 20
@@ -243,7 +239,7 @@ class _NameScreenState extends State<NameScreen> {
                                         style: BorderStyle.none
                                     )
                                 ),
-                                prefixIcon: Icon(Icons.person,color: Colors.amber.shade400,),
+                                prefixIcon:  Icon(Icons.person,color: Colors.amber.shade400,),
                               ),
                               autovalidateMode: AutovalidateMode.onUserInteraction,
                               validator: (text){
@@ -258,7 +254,7 @@ class _NameScreenState extends State<NameScreen> {
                                 }
                               },
                               onChanged: (text)=>setState(() {
-                                malenameTextEditingController.text =text;
+                                femaleTextEditingController.text =text;
                               }),
                             ),SizedBox(height: 15,),
                             TextFormField(
@@ -294,7 +290,7 @@ class _NameScreenState extends State<NameScreen> {
                                 );
                                 var date = "${datepicker?.day} - ${datepicker?.month} - ${datepicker?.year}";
                                 print(date);
-                                  femaledateTextEditingController.text = date;
+                                femaledateTextEditingController.text = date;
 
 
                               },
@@ -312,17 +308,8 @@ class _NameScreenState extends State<NameScreen> {
 
                               ),
                               onPressed: (){
-                                // _submit();
-                                double val = value();
-                                setState(() {
-                                  cal = val.toString();
-                                  show =true;
-                                });
-                                Timer(Duration(seconds: 5), () {
-                                  setState(() {
-                                    show = false;
-                                  });
-                                });
+                                _submit();
+
                               }, child: Text("Submit"),
 
 
@@ -338,10 +325,6 @@ class _NameScreenState extends State<NameScreen> {
               ],
             ),
           ),
-            Container(
-              child: show? Image.network("https://media.giphy.com/media/mYTOsQlXJGIeYaZklp/giphy.gif"):null,
-            )
-          ]
         ),
 
       ),
